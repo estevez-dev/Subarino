@@ -1,8 +1,8 @@
 *.iml
-.gradle
-/local.properties
-/.idea
-.DS_Store
-/build
-/captures
-.externalNativeBuild
+/Head-Unit/.gradle
+/Head-Unit/local.properties
+/Head-Unit/.idea
+/Head-Unit/.DS_Store
+/Head-Unit/build
+/Head-Unit/captures
+/Head-Unit/.externalNativeBuild

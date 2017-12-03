@@ -3,23 +3,23 @@
 #include <SoftwareSerial.h>
 
 //SoftSerial for bluetooth
-SoftwareSerial BTSerial(3, 2); // RX | TX
-String btReader;
+//SoftwareSerial BTSerial(3, 2); // RX | TX
+//String btReader;
 //CAN
 const int SPI_CS_PIN = 10; //pin 10 for Subarino CAN-Bus shield (can be 9)
 MCP_CAN CAN(SPI_CS_PIN);
 
 void setup() {
   
-  pinMode(12, OUTPUT);
+  //pinMode(12, OUTPUT);
   Serial.begin(38400);
-  Serial.println("<=== Subarino Prototype Alpha ===>");
-  Serial.println("Bluetooth initialization...");
-  BTSerial.begin(9600);
-  Serial.println("..Done");
+  //Serial.println("<=== Subarino Prototype Alpha ===>");
+  //Serial.println("Bluetooth initialization...");
+  //BTSerial.begin(9600);
+  //Serial.println("..Done");
   
   START_CAN_INIT:
-  Serial.println("CAN-Bus initialization...");
+  //Serial.println("CAN-Bus initialization...");
   /*
     Avaiable CAN speeds
     CAN_5KBPS
@@ -36,9 +36,9 @@ void setup() {
     CAN_1000KBPS
    */
   if (CAN_OK == CAN.begin(CAN_500KBPS)) {
-      Serial.println("..Done!");
+      //Serial.println("..Done!");
   } else {
-      Serial.println("..Failed. Will retry in 2 seconds");
+      //Serial.println("..Failed. Will retry in 2 seconds");
       delay(2000);
       goto START_CAN_INIT;
   }  
@@ -46,7 +46,7 @@ void setup() {
 
 void loop() {
   /* Bluetooth commands reader and worker*/
-  btReader="";
+  /*btReader="";
   while (BTSerial.available()) {
     delay(3);
     if (BTSerial.available()>0) {
@@ -62,7 +62,7 @@ void loop() {
     else
       digitalWrite(12, LOW); 
     BTSerial.write("Maybe...");
-  }
+  }*/
   
   /* CAN-Bus reader for CANsee app*/
   unsigned char len = 0;

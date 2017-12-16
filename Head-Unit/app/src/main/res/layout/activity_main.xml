@@ -8,23 +8,34 @@
 
     <Button
         android:id="@+id/btnConnect"
-        android:layout_width="wrap_content"
+        android:layout_width="132dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:text="Connect"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         tools:layout_editor_absoluteY="16dp" />
 
-    <ToggleButton
-        android:id="@+id/btnLed"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <Switch
+        android:id="@+id/swHeadlights"
+        android:layout_width="370dp"
+        android:layout_height="29dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="ToggleButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
+        android:text="HL"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnConnect" />
+
+    <Switch
+        android:id="@+id/swHLAuto"
+        android:layout_width="371dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:checked="true"
+        android:text="Auto HL"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/swHeadlights" />
 
 </android.support.constraint.ConstraintLayout>

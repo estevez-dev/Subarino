@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.ToggleButton;
 
 import java.io.IOException;
@@ -19,10 +20,11 @@ public class MainActivity extends AppCompatActivity {
 
     private final static int REQUEST_ENABLE_BT = 1;
     Button btnConnect;
-    OutputStream btOutStream = null;
+    OutputStream btOutStream;
     Boolean btConnected = false;
-    ToggleButton btnLed;
     BluetoothSocket btSocket = null;
+    Switch swHeadlights = null;
+    Switch swHLAuto = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,15 +32,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         btnConnect = (Button)findViewById(R.id.btnConnect);
-        btnLed = (ToggleButton)findViewById(R.id.btnLed);
-        btnLed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+        swHeadlights = (Switch)findViewById(R.id.swHeadlights);
+        swHLAuto = (Switch)findViewById(R.id.swHLAuto);
+        swHLAuto.setChecked(true);
+        switchHLControls(false);
+        swHLAuto.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked)
                 {
                     try {
-                        btOutStream.write("On".getBytes());
+                        btOutStream.write("13".getBytes());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -46,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                 else
                 {
                     try {
-                        btOutStream.write("Off".getBytes());
+                        btOutStream.write("14".getBytes());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -54,6 +60,32 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+
+        swHeadlights.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked)
+                {
+                    try {
+                        btOutStream.write("11".getBytes());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                    try {
+                        btOutStream.write("12".getBytes());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        });
+
         btnConnect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (!btConnected) {
@@ -88,8 +120,10 @@ public class MainActivity extends AppCompatActivity {
                         btOutStream = btSocket.getOutputStream();
                         btConnected = true;
                         btnConnect.setText("Disconnect");
+                        switchHLControls(true);
                         //now you can use out to send output via out.write
                     } catch (IOException e) {
+                        switchHLControls(false);
                         e.printStackTrace();
                     }
                 } else {
@@ -103,10 +137,16 @@ public class MainActivity extends AppCompatActivity {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    switchHLControls(false);
                     btConnected = false;
                     btnConnect.setText("Connect");
                 }
             }
         });
+    }
+
+    private void switchHLControls(boolean enabled) {
+        swHLAuto.setEnabled(enabled);
+        swHeadlights.setEnabled(enabled);
     }
 }

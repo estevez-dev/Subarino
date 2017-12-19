@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.ToggleButton;
 
@@ -25,13 +28,23 @@ public class MainActivity extends AppCompatActivity {
     BluetoothSocket btSocket = null;
     Switch swHeadlights = null;
     Switch swHLAuto = null;
+    ImageButton btnHLR = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
-        btnConnect = (Button)findViewById(R.id.btnConnect);
+        btnHLR = (ImageButton)findViewById(R.id.btnHLR);
+
+        btnHLR.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                ((ImageButton)v).setVisibility(View.INVISIBLE);
+            }
+        });
+
+        /*btnConnect = (Button)findViewById(R.id.btnConnect);
 
         swHeadlights = (Switch)findViewById(R.id.swHeadlights);
         swHLAuto = (Switch)findViewById(R.id.swHLAuto);
@@ -142,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                     btnConnect.setText("Connect");
                 }
             }
-        });
+        });*/
     }
 
     private void switchHLControls(boolean enabled) {

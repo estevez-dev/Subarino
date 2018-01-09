@@ -3,7 +3,6 @@
 #include <BH1750FVI.h>
 
 SoftwareSerial BTSerial(3, 2); // RX | TX
-String reader;
 BH1750FVI LightSensor;
 boolean hlAuto = true;
 #define  HL_INTERVAL  1000UL
@@ -24,39 +23,35 @@ void setup()
 void loop()
 {
   uint16_t lux = LightSensor.GetLightIntensity();
-  reader="";
-  int command = 0;
-  while (BTSerial.available()) {
-    delay(3);
-    if (BTSerial.available()>0) {
-      char c = BTSerial.read();
-      reader += c;
-    
+  char comUnit = 'z';
+  char comFunc = '9';
+
+  if (BTSerial.available() == 2) {
+    comUnit = BTSerial.read();
+    comFunc = BTSerial.read();
+    Serial.println("Recaved: "+String(comUnit)+String(comFunc));
+    if (comUnit == 'L') {
+      if (comFunc == '0') {
+        digitalWrite(8, HIGH);
+      } else if (comFunc == '1') {
+        digitalWrite(8, LOW);
+      } else if (comFunc == '2') {
+        digitalWrite(9, HIGH);
+      } else if (comFunc == '3') {
+        digitalWrite(9, LOW);
+      } else if (comFunc == '8') {
+        hlAuto = true;
+      } else if (comFunc == '9') {
+        hlAuto = false;
+      }    
     }
-  }
-  if (reader.length() > 0) {
-    Serial.println("Command: "+reader+"");
-    command = reader.toInt();
-    if (command == 11) {
-      digitalWrite(8, HIGH);
-      digitalWrite(9, HIGH);
-    } else if (command == 12) {
-      digitalWrite(8, LOW);
-      digitalWrite(9, LOW);
-    } else if (command == 13) {
-      hlAuto = true;
-    } else if (command == 14) {
-      hlAuto = false;
-      digitalWrite(8, LOW);
-      digitalWrite(9, LOW);  
-    }    
   }
 
   if (hlAuto == true) {
     static unsigned long previousMillis = 0;
     if(millis() - previousMillis > HL_INTERVAL) {
       previousMillis = millis();
-      
+      Serial.println(String(lux));
       if (lux < 100) {
         digitalWrite(8, HIGH);
         digitalWrite(9, HIGH);
@@ -66,7 +61,4 @@ void loop()
       }
     }
   }
- 
-  
-  
 }

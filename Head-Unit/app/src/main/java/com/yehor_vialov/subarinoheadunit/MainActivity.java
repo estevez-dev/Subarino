@@ -7,13 +7,12 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.ImageButton;
 import android.widget.Switch;
-import android.widget.ToggleButton;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,11 +23,11 @@ public class MainActivity extends AppCompatActivity {
     private final static int REQUEST_ENABLE_BT = 1;
     Button btnConnect;
     OutputStream btOutStream;
-    Boolean btConnected = false;
     BluetoothSocket btSocket = null;
-    Switch swHeadlights = null;
-    Switch swHLAuto = null;
-    ImageButton btnHLR = null;
+    Switch swHLLowBeam;
+    Switch swHLAuto;
+    Switch swHLParking;
+    TextView txtBTStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,130 +35,187 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        btnHLR = (ImageButton)findViewById(R.id.btnHLR);
-
-        btnHLR.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                ((ImageButton)v).setVisibility(View.INVISIBLE);
-            }
-        });
-
-        /*btnConnect = (Button)findViewById(R.id.btnConnect);
-
-        swHeadlights = (Switch)findViewById(R.id.swHeadlights);
+        txtBTStatus = (TextView)findViewById(R.id.txtBTStatus);
+        swHLLowBeam = (Switch)findViewById(R.id.swHLLowBeam);
         swHLAuto = (Switch)findViewById(R.id.swHLAuto);
+        swHLParking = (Switch)findViewById(R.id.swHLParking);
+
         swHLAuto.setChecked(true);
         switchHLControls(false);
+        setListeners();
+        connect();
+    }
+
+    @Override
+    protected void onDestroy() {
+        disconnect();
+        super.onDestroy();
+    }
+
+    private void disconnect() {
+        try {
+            btOutStream.close();
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
+        try {
+            btSocket.close();
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
+        switchHLControls(false);
+    }
+
+    private void connect() {
+        new Thread() {
+            public void run() {
+                boolean enableBTRequested = false;
+                while (btSocket==null || !btSocket.isConnected()) {
+                    BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+                    if (adapter == null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                txtBTStatus.setText("Bluetooth is not supported");
+                            }
+                        });
+                    } else {
+                        if (!adapter.isEnabled() && !enableBTRequested) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    txtBTStatus.setText("Bluetooth is not enabled. Will retry in 5 sec.");
+                                }
+                            });
+                            //make sure the device's bluetooth is enabled
+                            enableBTRequested = true;
+                            Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                            startActivityForResult(enableBluetooth, REQUEST_ENABLE_BT);
+                        } else if (adapter.isEnabled()) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    switchHLControls(false);
+                                    txtBTStatus.setText("Connecting...");
+                                }
+                            });
+                            enableBTRequested = false;
+                            final UUID SERIAL_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //UUID for serial connection
+                            String mac = "00:21:13:03:39:FE"; //HC-05
+                            BluetoothDevice device = adapter.getRemoteDevice(mac); //get remote device by mac, we assume these two devices are already paired
+                            // Get a BluetoothSocket to connect with the given BluetoothDevice
+                            btSocket = null;
+                            btOutStream = null;
+                            try {
+                                btSocket = device.createRfcommSocketToServiceRecord(SERIAL_UUID);
+                            } catch (Exception e) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        txtBTStatus.setText("Error creating socket.  Will retry in 5 sec.");
+                                    }
+                                });
+                            }
+
+                            try {
+                                btSocket.connect();
+                                btOutStream = btSocket.getOutputStream();
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        txtBTStatus.setText("Connected");
+                                        switchHLControls(true);
+
+                                    }
+                                });
+                            } catch (Exception e) {
+                                final Exception er = e;
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        txtBTStatus.setText("Connection error. Will retry in 5 sec.");
+                                    }
+
+                                });
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+    }
+
+    private void switchHLControls(boolean enabled) {
+        swHLAuto.setEnabled(enabled);
+        swHLLowBeam.setEnabled(enabled);
+        swHLParking.setEnabled(enabled);
+    }
+
+    private void sendCommand(String command) {
+        try {
+            btOutStream.write(command.getBytes());
+        } catch (IOException e) {
+            txtBTStatus.setText("Disconnected");
+            disconnect();
+            connect();
+        }
+    }
+
+    private void setListeners() {
         swHLAuto.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked)
                 {
-                    try {
-                        btOutStream.write("13".getBytes());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    sendCommand("L8");
                 }
                 else
                 {
-                    try {
-                        btOutStream.write("14".getBytes());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    sendCommand("L9");
                 }
 
             }
         });
 
 
-        swHeadlights.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        swHLLowBeam.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked)
                 {
-                    try {
-                        btOutStream.write("11".getBytes());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    sendCommand("L2");
                 }
                 else
                 {
-                    try {
-                        btOutStream.write("12".getBytes());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    sendCommand("L3");
                 }
 
             }
         });
 
-        btnConnect.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if (!btConnected) {
-                    BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-                    if (adapter == null) {
-                        // Device does not support Bluetooth
-                        finish(); //exit
-                    }
+        swHLParking.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
-                    if (!adapter.isEnabled()) {
-                        //make sure the device's bluetooth is enabled
-                        Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                        startActivityForResult(enableBluetooth, REQUEST_ENABLE_BT);
-                    }
-
-                    final UUID SERIAL_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //UUID for serial connection
-                    String mac = "00:21:13:03:39:FE"; //my laptop's mac adress
-                    BluetoothDevice device = adapter.getRemoteDevice(mac); //get remote device by mac, we assume these two devices are already paired
-
-
-                    // Get a BluetoothSocket to connect with the given BluetoothDevice
-                    btSocket = null;
-                    btOutStream = null;
-                    try {
-                        btSocket = device.createRfcommSocketToServiceRecord(SERIAL_UUID);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        btSocket.connect();
-                        btOutStream = btSocket.getOutputStream();
-                        btConnected = true;
-                        btnConnect.setText("Disconnect");
-                        switchHLControls(true);
-                        //now you can use out to send output via out.write
-                    } catch (IOException e) {
-                        switchHLControls(false);
-                        e.printStackTrace();
-                    }
-                } else {
-                    try {
-                        btOutStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        btSocket.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    switchHLControls(false);
-                    btConnected = false;
-                    btnConnect.setText("Connect");
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked)
+                {
+                    sendCommand("L0");
                 }
-            }
-        });*/
-    }
+                else
+                {
+                    sendCommand("L1");
+                }
 
-    private void switchHLControls(boolean enabled) {
-        swHLAuto.setEnabled(enabled);
-        swHeadlights.setEnabled(enabled);
+            }
+        });
     }
 }

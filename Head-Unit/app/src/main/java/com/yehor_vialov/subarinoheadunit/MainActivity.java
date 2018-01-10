@@ -15,19 +15,23 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity {
 
     private final static int REQUEST_ENABLE_BT = 1;
     Button btnConnect;
     OutputStream btOutStream;
+    InputStream btInStream;
     BluetoothSocket btSocket = null;
     Switch swHLLowBeam;
     Switch swHLAuto;
     Switch swHLParking;
     TextView txtBTStatus;
+    boolean ignoreSwitchChange = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,10 +44,9 @@ public class MainActivity extends AppCompatActivity {
         swHLAuto = (Switch)findViewById(R.id.swHLAuto);
         swHLParking = (Switch)findViewById(R.id.swHLParking);
 
-        swHLAuto.setChecked(true);
         switchHLControls(false);
-        setListeners();
         connect();
+        setListeners();
     }
 
     @Override
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private void disconnect() {
         try {
             btOutStream.close();
+            btInStream.close();
         } catch (Exception e) {
             //e.printStackTrace();
         }
@@ -106,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
                             // Get a BluetoothSocket to connect with the given BluetoothDevice
                             btSocket = null;
                             btOutStream = null;
+                            btInStream = null;
                             try {
                                 btSocket = device.createRfcommSocketToServiceRecord(SERIAL_UUID);
                             } catch (Exception e) {
@@ -120,15 +125,43 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 btSocket.connect();
                                 btOutStream = btSocket.getOutputStream();
+                                btInStream = btSocket.getInputStream();
 
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        txtBTStatus.setText("Connected");
                                         switchHLControls(true);
+                                        txtBTStatus.setText("Loading settings...");
+                                        reader();
 
                                     }
                                 });
+                                sendCommand("S0");
+                                while (btInStream.available() == 0) {
+                                    try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
+                                }
+
+
+                                final char parkingLights = (char)btInStream.read();
+                                final char lowbeamLights = (char)btInStream.read();
+                                final char lowbeamAuto = (char)btInStream.read();
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        switchHLControls(true);
+                                        ignoreSwitchChange = true;
+                                        if (parkingLights == '0') swHLParking.setChecked(false); else swHLParking.setChecked(true);
+                                        if (lowbeamLights == '0') swHLLowBeam.setChecked(false); else swHLLowBeam.setChecked(true);
+                                        if (lowbeamAuto == '0') swHLAuto.setChecked(false); else swHLAuto.setChecked(true);
+                                        ignoreSwitchChange = false;
+                                        txtBTStatus.setText("Connected.");
+                                        reader();
+                                    }
+                                });
+
+
+
                             } catch (Exception e) {
                                 final Exception er = e;
                                 runOnUiThread(new Runnable() {
@@ -152,6 +185,41 @@ public class MainActivity extends AppCompatActivity {
         }.start();
     }
 
+    private void reader() {
+        new Thread() {
+            public void run() {
+                while (btSocket!=null && btSocket.isConnected()) {
+                    try {
+                        if (btInStream.available() > 0) {
+                            final char parkingLights = (char)btInStream.read();
+                            final char lowbeamLights = (char)btInStream.read();
+                            final char lowbeamAuto = (char)btInStream.read();
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ignoreSwitchChange = true;
+                                    if (parkingLights == '0') swHLParking.setChecked(false); else swHLParking.setChecked(true);
+                                    if (lowbeamLights == '0') swHLLowBeam.setChecked(false); else swHLLowBeam.setChecked(true);
+                                    if (lowbeamAuto == '0') swHLAuto.setChecked(false); else swHLAuto.setChecked(true);
+                                    ignoreSwitchChange = false;
+                                }
+                            });
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                
+            }
+        }.start();
+    }
+
     private void switchHLControls(boolean enabled) {
         swHLAuto.setEnabled(enabled);
         swHLLowBeam.setEnabled(enabled);
@@ -162,6 +230,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             btOutStream.write(command.getBytes());
         } catch (IOException e) {
+            e.printStackTrace();
             txtBTStatus.setText("Disconnected");
             disconnect();
             connect();
@@ -173,13 +242,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked)
-                {
-                    sendCommand("L8");
-                }
-                else
-                {
-                    sendCommand("L9");
+                if (!ignoreSwitchChange) {
+                    if(isChecked) sendCommand("L8"); else sendCommand("L9");
                 }
 
             }
@@ -190,13 +254,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked)
-                {
-                    sendCommand("L2");
-                }
-                else
-                {
-                    sendCommand("L3");
+                if (!ignoreSwitchChange) {
+                    if(isChecked) sendCommand("L2"); else sendCommand("L3");
                 }
 
             }
@@ -206,13 +265,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked)
-                {
-                    sendCommand("L0");
-                }
-                else
-                {
-                    sendCommand("L1");
+                if (!ignoreSwitchChange) {
+                    if(isChecked) sendCommand("L0"); else sendCommand("L1");
                 }
 
             }

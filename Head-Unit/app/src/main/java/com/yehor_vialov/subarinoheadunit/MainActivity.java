@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     }
                                 });
-                                sendCommand("S0");
+                                sendCommand("LS0");
                                 while (btInStream.available() == 0) {
                                     try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
                                 }
@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("L8"); else sendCommand("L9");
+                    if(isChecked) sendCommand("LA1"); else sendCommand("LA0");
                 }
 
             }
@@ -255,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("L2"); else sendCommand("L3");
+                    if(isChecked) sendCommand("LL1"); else sendCommand("LL0");
                 }
 
             }
@@ -266,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("L0"); else sendCommand("L1");
+                    if(isChecked) sendCommand("LP1"); else sendCommand("LP0");
                 }
 
             }

@@ -151,9 +151,9 @@ public class MainActivity extends AppCompatActivity {
                                     public void run() {
                                         switchHLControls(true);
                                         ignoreSwitchChange = true;
-                                        if (parkingLights == '0') swHLParking.setChecked(false); else swHLParking.setChecked(true);
-                                        if (lowbeamLights == '0') swHLLowBeam.setChecked(false); else swHLLowBeam.setChecked(true);
-                                        if (lowbeamAuto == '0') swHLAuto.setChecked(false); else swHLAuto.setChecked(true);
+                                        //if (parkingLights == '0') swHLParking.setChecked(false); else swHLParking.setChecked(true);
+                                        //if (lowbeamLights == '0') swHLLowBeam.setChecked(false); else swHLLowBeam.setChecked(true);
+                                        //if (lowbeamAuto == '0') swHLAuto.setChecked(false); else swHLAuto.setChecked(true);
                                         ignoreSwitchChange = false;
                                         txtBTStatus.setText("Connected.");
                                         //reader();
@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("LA1"); else sendCommand("LA0");
+                    if(isChecked) sendCommand("LL2"); else sendCommand("LL0");
                 }
 
             }

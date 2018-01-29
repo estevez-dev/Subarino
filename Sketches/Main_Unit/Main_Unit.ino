@@ -1,10 +1,13 @@
+#include <XBee.h>
+
 #include <SD.h>
 
 #include <SoftwareSerial.h>
 #include <Wire.h>
 
 SoftwareSerial BTSerial(3, 2); // RX | TX
-SoftwareSerial Radio(6, 5);
+SoftwareSerial XBeeSerial(6, 5);
+XBee xbee = XBee();
 
 char lowbeamAuto = '0';
 char parkingLights = '0';
@@ -17,8 +20,9 @@ void setup()
   Serial.print("Bluetooth initialization...");
   BTSerial.begin(9600);
   Serial.println("Done.");
-  Serial.print("Radio initialization...");
-  Radio.begin(9600);
+  Serial.print("XBee initialization...");
+  XBeeSerial.begin(9600);
+  xbee.setSerial(XBeeSerial);
   Serial.println("Done.");
   Serial.print("SD Card initialization...");
   if (!SD.begin(4)) {
@@ -65,7 +69,8 @@ void loop() {
     comP = BTSerial.read();
     Serial.println("Recaved from BT: "+String(comH)+String(comL)+String(comP));
     if (comH == 'L') {
-        radioSend("L"+String(comL)+String(comP));
+        uint8_t cmd[] = {'L',comL,comP};
+        xbeeBroadcast(cmd, sizeof(cmd));
     }
   }
   
@@ -83,7 +88,13 @@ void loop() {
   }*/
 }
 
-void radioSend(String command){
-  Serial.println("Broadcasting to radio: "+command);
-  Radio.print(command);
+void xbeeBroadcast(uint8_t* command, int cmdSize) {
+  XBeeAddress64 addr64 = XBeeAddress64(0x0000, 0xffff);
+  Serial.print("Broadcasting: ");
+  for(int i = 0; i < cmdSize; i++) {
+    Serial.print(char(command[i]));
+  }
+  Serial.println(" ");
+  ZBTxRequest zbTx = ZBTxRequest(addr64, command, cmdSize);
+  xbee.send(zbTx);
 }

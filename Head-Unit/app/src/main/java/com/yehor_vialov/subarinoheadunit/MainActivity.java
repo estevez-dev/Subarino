@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                                 btOutStream = btSocket.getOutputStream();
                                 btInStream = btSocket.getInputStream();
 
-                                runOnUiThread(new Runnable() {
+                                /*runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         switchHLControls(true);
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 final char parkingLights = (char)btInStream.read();
                                 final char lowbeamLights = (char)btInStream.read();
-                                final char lowbeamAuto = (char)btInStream.read();
+                                final char lowbeamAuto = (char)btInStream.read();*/
 
                                 runOnUiThread(new Runnable() {
                                     @Override
@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                                         if (lowbeamAuto == '0') swHLAuto.setChecked(false); else swHLAuto.setChecked(true);
                                         ignoreSwitchChange = false;
                                         txtBTStatus.setText("Connected.");
-                                        reader();
+                                        //reader();
                                     }
                                 });
 

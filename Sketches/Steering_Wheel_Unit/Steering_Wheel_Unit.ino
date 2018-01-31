@@ -9,6 +9,7 @@ XBeeResponse response = XBeeResponse();
 ZBRxResponse rx = ZBRxResponse();
 char parkingLights = '0';
 char lowBeamLights = '0';
+char autoLights = '0';
 
 void setup()
 {
@@ -36,13 +37,15 @@ void loop() {
           switchParkingLights(comP);
         } else if (comL == 'L') {
           switchLowBeamLights(comP);
+        } else if (comL == 'A') {
+          autoLights = comP;
         }
       }
     }
   }
   
   //check light sensor
-  if (lowBeamLights == '2') {
+  if (autoLights == '1') {
     uint16_t lux = LightSensor.GetLightIntensity();
     static unsigned long previousMillis = 0;
     if(millis() - previousMillis > HL_INTERVAL) {
@@ -69,7 +72,7 @@ void switchLowBeamLights(char state) {
     if (state == '1') {
       digitalWrite(7, HIGH);
       digitalWrite(8, HIGH);
-    } else if (state == '0') {
+    } else {
       digitalWrite(8, LOW);
       if (parkingLights == '0') digitalWrite(7, LOW); //switch parking lights off if low beam was turned on without it
     }

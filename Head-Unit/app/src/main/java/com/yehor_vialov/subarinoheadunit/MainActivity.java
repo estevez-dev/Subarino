@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("ALL2"); else sendCommand("ALL0");
+                    if(isChecked) sendCommand("ALA1"); else sendCommand("ALA0");
                 }
 
             }

@@ -5,7 +5,6 @@
 #define  HL_INTERVAL  1000UL
 BH1750FVI LightSensor;
 XBee xbee = XBee();
-XBeeResponse response = XBeeResponse();
 ZBRxResponse rx = ZBRxResponse();
 char parkingLights = '0';
 char lowBeamLights = '0';

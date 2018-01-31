@@ -9,10 +9,6 @@ SoftwareSerial BTSerial(3, 2); // RX | TX
 SoftwareSerial XBeeSerial(6, 5);
 XBee xbee = XBee();
 
-char lowbeamAuto = '0';
-char parkingLights = '0';
-char lowbeamLights = '0';
-
 void setup()
 {
   Serial.begin(9600);
@@ -28,49 +24,56 @@ void setup()
   if (!SD.begin(4)) {
     Serial.println("Failed");
   } else {
-    File settings;
+    File file;
     Serial.println("Done.");
-    Serial.print("Checking settings file...");
-    if (SD.exists("settings.sub")) {
-      Serial.println("Ok.");
-      /*Serial.println("Reading and applying settings...");
-      settings = SD.open("settings.sub");
-      while (settings.available() > 0) {
-        char comH, comL, comP;
-        comH = settings.read();
-        comL = settings.read();
-        comP = settings.read();
-        radioSend(String(comH) + String(comL) + String(comP));
-        Serial.println(String(comH) + String(comL) + String(comP));
-      }
+    Serial.println("Reading saved state...");
+    delay(8000);
+    File root = SD.open("/");
+    root.rewindDirectory();
+    nextfile:
+    file = root.openNextFile();
+    if (!file) {
       Serial.println("Done.");
-      settings.close();*/
     } else {
-      Serial.print("No settings file. Creating...");
-      settings = SD.open("settings.sub", FILE_WRITE);
-      settings.close();
-      if (SD.exists("settings.sub")) {
-        Serial.println("Done.");
-      } else {
-        Serial.println("Failed.");
+      if ((file.name()[0] == 'S') && (file.name()[1] == 'T')) {
+        uint8_t com[5] = {'A', file.name()[2], file.name()[3], file.read()};
+        xbeeBroadcast(com, sizeof(com));
       }
+      file.close();
+      goto nextfile;
     }
+    root.close();
   }
   Serial.println("Setup finished.");
 }
 
 void loop() {
-  char comH, comL ,comP;
+  char comT, comH, comL ,comP;
+  File stateFile;
   
   BTSerial.listen();
-  if (BTSerial.available() >= 3) {
+  if (BTSerial.available() >= 4) {
+    comT = BTSerial.read();
     comH = BTSerial.read();
     comL = BTSerial.read();
     comP = BTSerial.read();
-    Serial.println("Recaved from BT: "+String(comH)+String(comL)+String(comP));
-    if (comH == 'L') {
-        uint8_t cmd[] = {'L',comL,comP};
+    Serial.println("Recaved from BT: "+String(comT)+String(comH)+String(comL)+String(comP));
+    if (comT == 'A') {
+        uint8_t cmd[] = {'A',comH,comL,comP};
         xbeeBroadcast(cmd, sizeof(cmd));
+        char fileName[5] = {'S','T',comH, comL}; 
+        Serial.print("Writing to file: ");
+        Serial.print(fileName);
+        Serial.print("...");
+        SD.remove(fileName);
+        stateFile = SD.open(fileName, FILE_WRITE);
+        if (stateFile) {
+          stateFile.print(comP);
+          stateFile.close();
+          Serial.println("Done.");
+        } else {
+          Serial.println("Failed.");
+        }
     }
   }
   

@@ -26,23 +26,16 @@ void loop() {
   if (xbee.getResponse().isAvailable()) {
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
       xbee.getResponse().getZBRxResponse(rx);
-      char comH, comL, comP;
-      comH = char(rx.getData()[0]);
-      if (comH == 'L') {
-        comL = char(rx.getData()[1]);
-        comP = char(rx.getData()[2]);
+      char comT, comH, comL, comP;
+      comT = char(rx.getData()[0]);
+      comH = char(rx.getData()[1]);
+      if ((comT == 'A') && (comH == 'L')) {
+        comL = char(rx.getData()[2]);
+        comP = char(rx.getData()[3]);
         if (comL == 'P') {
-          parkingLights = comP;
-          if (comP == '1')
-            switchParkingLights(true);
-          else if (comP == '0')
-            switchParkingLights(false);
+          switchParkingLights(comP);
         } else if (comL == 'L') {
-          lowBeamLights = comP;
-          if (comP == '1')
-            switchLowBeamLights(true);
-          else if (comP == '0')
-            switchLowBeamLights(false);
+          switchLowBeamLights(comP);
         }
       }
     }
@@ -54,22 +47,41 @@ void loop() {
     static unsigned long previousMillis = 0;
     if(millis() - previousMillis > HL_INTERVAL) {
       previousMillis = millis();
-      if (lux < 100) switchLowBeamLights(true); else if (lux > 105) switchLowBeamLights(false);
+      if (lux < 100) switchLowBeamLights('1'); else if (lux > 105) switchLowBeamLights('0');
     }
   }
 }
 
-void switchParkingLights(boolean on) {
-  if (on) digitalWrite(7, HIGH); else digitalWrite(7, LOW);
+void switchParkingLights(char state) {
+  if (state != parkingLights) {
+    if (state == '1')
+      digitalWrite(7, HIGH);
+    else
+      digitalWrite(7, LOW);
+    parkingLights = state;
+    uint8_t cmd[] = {'S','L','P',state};
+    xbeeBroadcast(cmd, sizeof(cmd));
+  }
 }
 
-void switchLowBeamLights(boolean on) {
-  if (on) {
-    digitalWrite(7, HIGH);
-    digitalWrite(8, HIGH);
-  } else {
-    digitalWrite(8, LOW);
-    if (parkingLights == '0') digitalWrite(7, LOW); //switch parking lights off if low beam was turned on without it
+void switchLowBeamLights(char state) {
+  if (state != lowBeamLights) {
+    if (state == '1') {
+      digitalWrite(7, HIGH);
+      digitalWrite(8, HIGH);
+    } else if (state == '0') {
+      digitalWrite(8, LOW);
+      if (parkingLights == '0') digitalWrite(7, LOW); //switch parking lights off if low beam was turned on without it
+    }
+    lowBeamLights = state;
+    uint8_t cmd[] = {'S','L','L',state};
+    xbeeBroadcast(cmd, sizeof(cmd));
   }
+}
+
+void xbeeBroadcast(uint8_t* command, int cmdSize) {
+  XBeeAddress64 addr64 = XBeeAddress64(0x0000, 0xffff);
+  ZBTxRequest zbTx = ZBTxRequest(addr64, command, cmdSize);
+  xbee.send(zbTx);
 }
 

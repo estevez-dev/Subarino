@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("LL2"); else sendCommand("LL0");
+                    if(isChecked) sendCommand("ALL2"); else sendCommand("ALL0");
                 }
 
             }
@@ -255,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("LL1"); else sendCommand("LL0");
+                    if(isChecked) sendCommand("ALL1"); else sendCommand("ALL0");
                 }
 
             }
@@ -266,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!ignoreSwitchChange) {
-                    if(isChecked) sendCommand("LP1"); else sendCommand("LP0");
+                    if(isChecked) sendCommand("ALP1"); else sendCommand("ALP0");
                 }
 
             }

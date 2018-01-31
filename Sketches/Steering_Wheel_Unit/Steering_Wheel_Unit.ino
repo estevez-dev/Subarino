@@ -61,8 +61,8 @@ void switchParkingLights(char state) {
     else
       digitalWrite(7, LOW);
     parkingLights = state;
-    uint8_t cmd[] = {'S','L','P',state};
-    xbeeBroadcast(cmd, sizeof(cmd));
+    //uint8_t cmd[] = {'S','L','P',state};
+    //xbeeBroadcast(cmd, sizeof(cmd));
   }
 }
 
@@ -76,13 +76,15 @@ void switchLowBeamLights(char state) {
       if (parkingLights == '0') digitalWrite(7, LOW); //switch parking lights off if low beam was turned on without it
     }
     lowBeamLights = state;
-    uint8_t cmd[] = {'S','L','L',state};
-    xbeeBroadcast(cmd, sizeof(cmd));
+    if (autoLights == '1') {
+      uint8_t cmd[] = {'S','L','L',state};
+      xbeeBroadcast(cmd, sizeof(cmd));
+    }
   }
 }
 
 void xbeeBroadcast(uint8_t* command, int cmdSize) {
-  XBeeAddress64 addr64 = XBeeAddress64(0x0000, 0xffff);
+  XBeeAddress64 addr64 = XBeeAddress64(0x13A200, 0x41070232);
   ZBTxRequest zbTx = ZBTxRequest(addr64, command, cmdSize);
   xbee.send(zbTx);
 }

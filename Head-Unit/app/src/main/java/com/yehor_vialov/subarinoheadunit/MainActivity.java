@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                                         //if (lowbeamAuto == '0') swHLAuto.setChecked(false); else swHLAuto.setChecked(true);
                                         ignoreSwitchChange = false;
                                         txtBTStatus.setText("Connected.");
-                                        //reader();
+                                        reader();
                                     }
                                 });
 
@@ -190,21 +190,34 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (btSocket!=null && btSocket.isConnected()) {
                     try {
-                        if (btInStream.available() > 0) {
-                            final char parkingLights = (char)btInStream.read();
-                            final char lowbeamLights = (char)btInStream.read();
-                            final char lowbeamAuto = (char)btInStream.read();
+                        if (btInStream.available() >= 4) {
+                            char comT = (char)btInStream.read();
+                            char comH = (char)btInStream.read();
+                            char comL = (char)btInStream.read();
+                            //char comP = (char)btInStream.read();
+                            char pL = '0', lL = '0', lA = '0';
+                            if ((comT == 'S') && (comH == 'L')) {
+                                if (comL == 'P') {pL = (char) btInStream.read();}
+                                else if (comL == 'L') {lL = (char) btInStream.read();}
+                                else if (comL == 'A') {lA = (char) btInStream.read();}
 
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ignoreSwitchChange = true;
-                                    if (parkingLights == '0') swHLParking.setChecked(false); else swHLParking.setChecked(true);
-                                    if (lowbeamLights == '0') swHLLowBeam.setChecked(false); else swHLLowBeam.setChecked(true);
-                                    if (lowbeamAuto == '0') swHLAuto.setChecked(false); else swHLAuto.setChecked(true);
-                                    ignoreSwitchChange = false;
-                                }
-                            });
+                                final char parkingLights = pL;
+                                final char lowbeamLights = lL;
+                                final char lowbeamAuto = lA;
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        ignoreSwitchChange = true;
+                                        if (parkingLights == '0') swHLParking.setChecked(false);
+                                        else swHLParking.setChecked(true);
+                                        if (lowbeamLights == '0') swHLLowBeam.setChecked(false);
+                                        else swHLLowBeam.setChecked(true);
+                                        if (lowbeamAuto == '0') swHLAuto.setChecked(false);
+                                        else swHLAuto.setChecked(true);
+                                        ignoreSwitchChange = false;
+                                    }
+                                });
+                            }
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
